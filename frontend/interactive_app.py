@@ -3,6 +3,17 @@ import json
 import requests
 
 st.set_page_config(page_title="🧠 Mental Health Chatbot")
+
+# Background styling
+st.markdown("""
+<style>
+body {
+    background-image: url('https://raw.githubusercontent.com/samadarshini-bommala/mental-health-chatbot/main/frontend/background.png');
+    background-size: cover;
+    background-attachment: fixed;
+}
+</style>
+""", unsafe_allow_html=True)
 st.title("🧠 Mental Health Support - Interactive Mode")
 
 # Load questions
@@ -35,7 +46,14 @@ if st.session_state.current_question < len(questions):
             st.session_state.chat_history = st.session_state.chat_history[:-2]
             st.session_state.answers = st.session_state.answers[:-1]
             st.rerun()
-    st.markdown(f"**{q}**")
+    st.markdown(
+    f"""
+    <div style='background-color: #f0f9ff; padding: 15px; border-radius: 10px; font-size: 16px;'>
+        <strong>{q}</strong>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
 
     user_input = None
     yes_no_question = any(kw in q.lower() for kw in ["diagnosed", "comfortable", "believe your productivity", "sought professional help", "open to trying"])
@@ -69,7 +87,6 @@ if st.session_state.current_question < len(questions):
     "role": "assistant",
     "message": f"**Your Support Summary:**\\n\\n{st.session_state.feedback}"
 })
-
 
             st.session_state.current_question += 1
             st.rerun()
@@ -110,7 +127,7 @@ else:
     "anxiety", "stress", "mental", "therapy", "depression", "health",
     "emotion", "mood", "trauma", "wellbeing", "self-care", "counseling",
     "burnout", "grief", "isolation", "panic", "fear", "support",
-    "psychologist", "psychiatrist", "diagnosis", "mental illness" , "feel" , "talk"
+    "psychologist", "psychiatrist", "diagnosis", "mental illness"
 ]
         if any(word in followup.lower() for word in keywords):
             try:
