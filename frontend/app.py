@@ -159,16 +159,23 @@ elif st.session_state.page_number == 1:
         questions = translations.get(st.session_state.language, default_questions)
 
     st.title("📝 General Background Questions")
-
     with st.form("general_form"):
         age = st.text_input(f"🔢 {questions[0]}")
         activities = st.text_area(f"🏖️ {questions[1]}")
         social = st.radio(f"👥 {questions[2]}", ["Rarely", "Sometimes", "Often", "Daily"])
         sleep = st.slider(f"😴 {questions[3]}", 0, 12, 7)
 
-        next_button = st.form_submit_button("Next ➡️")
+        col1, col2 = st.columns([1, 1])
 
-    if next_button:
+        with col1:
+            back_button = st.form_submit_button("⬅️ Back")
+        with col2:
+            next_button = st.form_submit_button("Next ➡️")
+
+    if back_button:
+        st.session_state.page_number = 0
+        st.rerun()
+    elif next_button:
         st.session_state.general_answers = [
             {"question": questions[0], "answer": age},
             {"question": questions[1], "answer": activities},
@@ -194,9 +201,17 @@ elif st.session_state.page_number == 2 and not st.session_state.survey_completed
         open_support = st.radio(f"🌟 {questions[8]}", ["Yes", "No"])
         needed_support = st.text_area(f"❤️ {questions[9]}")
 
-        submit_button = st.form_submit_button("Submit Survey")
+        col1, col2 = st.columns([1, 1])
 
-    if submit_button:
+        with col1:
+            back_button = st.form_submit_button("⬅️ Back")
+        with col2:
+            submit_button = st.form_submit_button("Submit Survey")
+
+    if back_button:
+        st.session_state.page_number = 1
+        st.rerun()
+    elif submit_button:
         st.session_state.mental_answers = [
             {"question": questions[4], "answer": gender},
             {"question": questions[5], "answer": str(stress)},
@@ -213,7 +228,7 @@ elif st.session_state.page_number == 2 and not st.session_state.survey_completed
 
         try:
             response = requests.post(
-                "http://127.0.0.1:8000/generate_feedback",
+                "https://your-render-url.onrender.com/generate_feedback",
                 json=payload
             )
             feedback_text = response.json().get("feedback", "Sorry, something went wrong.")
@@ -250,7 +265,7 @@ elif st.session_state.survey_completed:
             # Check for keywords
             if user_input and any(word in user_input.lower() for word in keywords):
                 response = requests.post(
-                    "http://127.0.0.1:8000/generate_feedback",
+                    "https://mental-health-chatbot-nh4y.onrender.com/generate_feedback",
                     json={
                         "responses": st.session_state.general_answers + st.session_state.mental_answers + [{"question": user_input, "answer": user_input}],
                         "language": st.session_state.language
@@ -259,7 +274,7 @@ elif st.session_state.survey_completed:
                 bot_reply = response.json().get("feedback", "Sorry, something went wrong.")
             else:
                 response = requests.post(
-                    "http://127.0.0.1:8000/chat",
+                    "https://mental-health-chatbot-nh4y.onrender.com/chat",
                     json={"question": user_input, "language": st.session_state.language}
                 )
                 bot_reply = response.json().get("reply", "Sorry, something went wrong.")
