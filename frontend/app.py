@@ -1,5 +1,6 @@
 import streamlit as st
 import requests
+import os
 
 # Set app config
 st.set_page_config(page_title="🧠 Mental Health Chatbot", layout="wide")
@@ -17,7 +18,7 @@ for key, value in {
     if key not in st.session_state:
         st.session_state[key] = value
 
-# Apply different backgrounds
+# Styling and Background setup
 if st.session_state.page_number == 0:
     st.markdown("""
     <style>
@@ -55,7 +56,7 @@ else:
     </style>
     """, unsafe_allow_html=True)
 
-# Sidebar only on pages 1, 2, and 3
+# Sidebar for pages after Welcome
 if st.session_state.page_number != 0:
     with st.sidebar:
         st.image(
@@ -68,49 +69,8 @@ if st.session_state.page_number != 0:
         st.markdown("Providing compassionate mental health support, one conversation at a time. 💬")
         st.markdown("---")
 
-# Language translations for questions
-translations = {
-    "Spanish": [
-        "¿Cuál es tu edad?",
-        "¿Te sientes cómodo discutiendo tus emociones con otros?",
-        "¿Has sido diagnosticado con alguna condición de salud mental?",
-        "¿Crees que tu salud mental afecta tu productividad?",
-        "¿Has buscado ayuda profesional en el pasado?",
-        "¿Estás abierto a probar nuevas opciones de apoyo de salud mental?",
-        "¿Qué tipo de apoyo sientes que te ayudaría ahora?"
-    ],
-    "French": [
-        "Quel est votre âge?",
-        "Vous sentez-vous à l'aise de parler de vos émotions avec les autres?",
-        "Avez-vous été diagnostiqué avec des troubles de santé mentale?",
-        "Croyez-vous que votre santé mentale affecte votre productivité?",
-        "Avez-vous déjà demandé de l'aide professionnelle?",
-        "Êtes-vous ouvert à essayer de nouvelles options de soutien en santé mentale?",
-        "Quel type de soutien pensez-vous qui vous aiderait maintenant?"
-    ],
-    "German": [
-        "Wie alt sind Sie?",
-        "Fühlen Sie sich wohl dabei, Ihre Gefühle mit anderen zu besprechen?",
-        "Wurden Sie mit psychischen Erkrankungen diagnostiziert?",
-        "Glauben Sie, dass Ihre psychische Gesundheit Ihre Produktivität beeinflusst?",
-        "Haben Sie schon professionelle Hilfe in Anspruch genommen?",
-        "Sind Sie offen für neue Unterstützungsangebote zur psychischen Gesundheit?",
-        "Welche Art von Unterstützung würde Ihnen jetzt helfen?"
-    ],
-    "Hindi": [
-        "आपकी उम्र क्या है?",
-        "क्या आप दूसरों के साथ अपनी भावनाओं पर चर्चा करने में सहज हैं?",
-        "क्या आपको किसी मानसिक स्वास्थ्य स्थिति का निदान किया गया है?",
-        "क्या आपको लगता है कि आपका मानसिक स्वास्थ्य आपकी उत्पादकता को प्रभावित करता है?",
-        "क्या आपने पहले पेशेवर मदद ली है?",
-        "क्या आप मानसिक स्वास्थ्य सहायता के नए विकल्पों को आज़माने के लिए तैयार हैं?",
-        "आपको अभी किस प्रकार के समर्थन की आवश्यकता महसूस होती है?"
-    ]
-}
-
-
-# Default questions
-default_questions = [
+# Main Questions
+questions = [
     "What is your age?",
     "What activities help you feel relaxed or happy?",
     "How often do you spend time with family or friends?",
@@ -123,7 +83,63 @@ default_questions = [
     "What type of support do you feel would help you right now?"
 ]
 
-# Mental health keywords
+# Translations
+translations = {
+    "Spanish": [
+        "¿Cuál es tu edad?",
+        "¿Qué actividades te ayudan a relajarte o ser feliz?",
+        "¿Con qué frecuencia pasas tiempo con familia o amigos?",
+        "¿Cuántas horas duermes normalmente cada noche?",
+        "¿Cuál es tu género?",
+        "¿Cómo describirías tu nivel actual de estrés?",
+        "¿Te sientes cómodo discutiendo tus emociones?",
+        "¿Has buscado ayuda profesional antes?",
+        "¿Estás abierto a nuevas opciones de apoyo en salud mental?",
+        "¿Qué tipo de apoyo sientes que te ayudaría ahora?"
+    ],
+    "French": [
+        "Quel est votre âge?",
+        "Quelles activités vous aident à vous détendre ou à être heureux?",
+        "À quelle fréquence passez-vous du temps avec votre famille ou vos amis?",
+        "Combien d'heures dormez-vous généralement chaque nuit?",
+        "Quel est votre genre?",
+        "Comment décririez-vous votre niveau actuel de stress?",
+        "Êtes-vous à l'aise pour discuter de vos émotions?",
+        "Avez-vous déjà demandé de l'aide professionnelle?",
+        "Êtes-vous ouvert à de nouvelles options de soutien en santé mentale?",
+        "Quel type de soutien pensez-vous qui vous aiderait maintenant?"
+    ],
+    "German": [
+        "Wie alt sind Sie?",
+        "Welche Aktivitäten helfen Ihnen, sich zu entspannen oder glücklich zu sein?",
+        "Wie oft verbringen Sie Zeit mit Familie oder Freunden?",
+        "Wie viele Stunden schlafen Sie normalerweise jede Nacht?",
+        "Was ist Ihr Geschlecht?",
+        "Wie würden Sie Ihr aktuelles Stresslevel beschreiben?",
+        "Fühlen Sie sich wohl dabei, Ihre Emotionen zu besprechen?",
+        "Haben Sie jemals professionelle Hilfe gesucht?",
+        "Sind Sie offen für neue Optionen zur psychischen Unterstützung?",
+        "Welche Art von Unterstützung würde Ihnen jetzt helfen?"
+    ],
+    "Hindi": [
+        "आपकी उम्र क्या है?",
+        "कौन सी गतिविधियाँ आपको आराम या खुशी का अनुभव कराती हैं?",
+        "आप कितनी बार परिवार या दोस्तों के साथ समय बिताते हैं?",
+        "आप आमतौर पर हर रात कितने घंटे सोते हैं?",
+        "आपका लिंग क्या है?",
+        "आप अपने वर्तमान तनाव स्तर का वर्णन कैसे करेंगे?",
+        "क्या आप अपनी भावनाओं पर चर्चा करने में सहज हैं?",
+        "क्या आपने पहले पेशेवर मदद ली है?",
+        "क्या आप मानसिक स्वास्थ्य समर्थन के नए विकल्पों के लिए तैयार हैं?",
+        "अब किस प्रकार के समर्थन से आपको मदद मिल सकती है?"
+    ]
+}
+
+# Update questions based on selected language
+if st.session_state.language != "English":
+    questions = translations.get(st.session_state.language, questions)
+
+# Keywords
 keywords = [
     "anxiety", "stress", "mental", "therapy", "depression", "health",
     "emotion", "mood", "trauma", "wellbeing", "self-care", "counseling",
@@ -131,7 +147,7 @@ keywords = [
     "psychologist", "psychiatrist", "diagnosis", "mental illness", "medication", "help"
 ]
 
-# Welcome Page
+# --- Page 0: Welcome Page ---
 if st.session_state.page_number == 0:
     col1, col2 = st.columns([6, 1])
 
@@ -152,13 +168,10 @@ if st.session_state.page_number == 0:
         st.session_state.page_number = 1
         st.rerun()
 
-# General Questions Page
+# --- Page 1: General Background Questions ---
 elif st.session_state.page_number == 1:
-    questions = default_questions
-    if st.session_state.language != "English":
-        questions = translations.get(st.session_state.language, default_questions)
-
     st.title("📝 General Background Questions")
+
     with st.form("general_form"):
         age = st.text_input(f"🔢 {questions[0]}")
         activities = st.text_area(f"🏖️ {questions[1]}")
@@ -166,7 +179,6 @@ elif st.session_state.page_number == 1:
         sleep = st.slider(f"😴 {questions[3]}", 0, 12, 7)
 
         col1, col2 = st.columns([1, 1])
-
         with col1:
             back_button = st.form_submit_button("⬅️ Back")
         with col2:
@@ -185,12 +197,8 @@ elif st.session_state.page_number == 1:
         st.session_state.page_number = 2
         st.rerun()
 
-# Mental Health Questions Page
+# --- Page 2: Mental Health Questions ---
 elif st.session_state.page_number == 2 and not st.session_state.survey_completed:
-    questions = default_questions
-    if st.session_state.language != "English":
-        questions = translations.get(st.session_state.language, default_questions)
-
     st.title("🧠 Mental Health Related Questions")
 
     with st.form("mental_form"):
@@ -202,7 +210,6 @@ elif st.session_state.page_number == 2 and not st.session_state.survey_completed
         needed_support = st.text_area(f"❤️ {questions[9]}")
 
         col1, col2 = st.columns([1, 1])
-
         with col1:
             back_button = st.form_submit_button("⬅️ Back")
         with col2:
@@ -228,7 +235,7 @@ elif st.session_state.page_number == 2 and not st.session_state.survey_completed
 
         try:
             response = requests.post(
-                "https://your-render-url.onrender.com/generate_feedback",
+                "https://mental-health-chatbot-nh4y.onrender.com/generate_feedback",
                 json=payload
             )
             feedback_text = response.json().get("feedback", "Sorry, something went wrong.")
@@ -239,7 +246,7 @@ elif st.session_state.page_number == 2 and not st.session_state.survey_completed
         except Exception as e:
             st.error(f"❌ Failed to get feedback: {e}")
 
-# Chat Page after Survey
+# --- Page 3: After Survey - Chat Page ---
 elif st.session_state.survey_completed:
     st.title("📋 Your Mental Health Support Summary")
     if st.session_state.feedback:
@@ -262,22 +269,15 @@ elif st.session_state.survey_completed:
             st.markdown(user_input)
 
         try:
-            # Check for keywords
-            if user_input and any(word in user_input.lower() for word in keywords):
-                response = requests.post(
-                    "https://mental-health-chatbot-nh4y.onrender.com/generate_feedback",
-                    json={
-                        "responses": st.session_state.general_answers + st.session_state.mental_answers + [{"question": user_input, "answer": user_input}],
-                        "language": st.session_state.language
-                    }
-                )
-                bot_reply = response.json().get("feedback", "Sorry, something went wrong.")
-            else:
+            if any(word in user_input.lower() for word in keywords):
                 response = requests.post(
                     "https://mental-health-chatbot-nh4y.onrender.com/chat",
                     json={"question": user_input, "language": st.session_state.language}
                 )
                 bot_reply = response.json().get("reply", "Sorry, something went wrong.")
+            else:
+                bot_reply = "⚠️ Sorry, I can only assist with mental health-related topics."
+
         except Exception as e:
             bot_reply = f"Error: {e}"
 
